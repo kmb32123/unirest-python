@@ -23,13 +23,13 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
 
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import base64
 import threading
 import gzip
-import utils
+from . import utils
 
-from StringIO import StringIO
+from io import StringIO
 from poster.streaminghttp import register_openers
 
 try:
@@ -50,7 +50,7 @@ except ImportError:
     pass
 
 if not _httplib:
-    import urllib2
+    import urllib.request, urllib.error, urllib.parse
     _httplib = "urllib2"
 
 # Register the streaming http handlers
@@ -66,12 +66,12 @@ def __request(method, url, params={}, headers={}, auth=None, callback=None):
         url += "?" + url_parts[1]
 
     # Lowercase header keys
-    headers = dict((k.lower(), v) for k, v in headers.iteritems())
+    headers = dict((k.lower(), v) for k, v in headers.items())
     headers["user-agent"] = USER_AGENT
 
     data, post_headers = utils.urlencode(params)
     if post_headers is not None:
-        headers = dict(headers.items() + post_headers.items())
+        headers = dict(list(headers.items()) + list(post_headers.items()))
 
     headers['Accept-encoding'] = 'gzip'
 
@@ -82,7 +82,7 @@ def __request(method, url, params={}, headers={}, auth=None, callback=None):
             encoded_string = base64.b64encode(user + ':' + password)
             headers['Authorization'] = "Basic " + encoded_string
 
-    headers = dict(headers.items() + _defaultheaders.items())
+    headers = dict(list(headers.items()) + list(_defaultheaders.items()))
 
     _unirestResponse = None
     if _httplib == "urlfetch":
@@ -91,11 +91,11 @@ def __request(method, url, params={}, headers={}, auth=None, callback=None):
                                            res.headers,
                                            res.content)
     else:
-        req = urllib2.Request(url, data, headers)
+        req = urllib.request.Request(url, data, headers)
         req.get_method = lambda: method
         try:
-            response = urllib2.urlopen(req, timeout=_timeout)
-        except urllib2.HTTPError, e:
+            response = urllib.request.urlopen(req, timeout=_timeout)
+        except urllib.error.HTTPError as e:
             response = e
 
         _unirestResponse = UnirestResponse(response.code,
@@ -124,7 +124,7 @@ AUTH_KEY = 'auth'
 def get_parameters(kwargs):
     params = kwargs.get(PARAMS_KEY, {})
     if params is not None and type(params) is dict:
-        return dict((k, v) for k, v in params.iteritems() if v is not None)
+        return dict((k, v) for k, v in params.items() if v is not None)
     return params
 
 
@@ -135,7 +135,7 @@ def get(url, **kwargs):
             url += "?"
         else:
             url += "&"
-        url += utils.dict2query(dict((k, v) for k, v in params.iteritems() if v is not None))  # Removing None values/encode unicode objects
+        url += utils.dict2query(dict((k, v) for k, v in params.items() if v is not None))  # Removing None values/encode unicode objects
 
     return __dorequest("GET", url, {}, kwargs.get(HEADERS_KEY, {}), kwargs.get(AUTH_KEY, None), kwargs.get(CALLBACK_KEY, None))
 

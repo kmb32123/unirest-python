@@ -2,14 +2,14 @@ from poster.encode import multipart_encode
 
 
 def to_utf8(value):
-    if isinstance(value, unicode):
+    if isinstance(value, str):
         return value.encode('utf-8')
     return value
 
 
 def _dictionary_encoder(key, dictionary):
     result = []
-    for k, v in dictionary.iteritems():
+    for k, v in dictionary.items():
         if type(v) is file:
             continue
         key = to_utf8(key)
@@ -29,7 +29,7 @@ def dict2query(dictionary):
     """
     query = []
     encoders = {dict: _dictionary_encoder}
-    for k, v in dictionary.iteritems():
+    for k, v in dictionary.items():
         if v.__class__ in encoders:
             nested_query = encoders[v.__class__](k, v)
             query += nested_query
@@ -43,7 +43,7 @@ def dict2query(dictionary):
 
 def urlencode(data):
     if isinstance(data, dict):
-        for v in data.values():
+        for v in list(data.values()):
             if isinstance(v, file):
                 return multipart_encode(data)
         return dict2query(data), None
@@ -52,5 +52,5 @@ def urlencode(data):
 
 
 if __name__ == '__main__':
-    print '...'
-    print dict2query({'foo': 'bar', 'nested': {'a': 'b', 'c': 'd'}})
+    print('...')
+    print(dict2query({'foo': 'bar', 'nested': {'a': 'b', 'c': 'd'}}))
